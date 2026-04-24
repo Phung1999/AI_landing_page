@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.db
+.env
+.venv/
+venv/
+*.log
+.DS_Store
+/frontend/node_modules/
+/backend/venv/
