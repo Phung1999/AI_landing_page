@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from app.routes import generate, templates
-
 load_dotenv()
+
+from app.routes import generate, templates, export, refine
 
 app = FastAPI(
     title="AI Landing Page Generator API",
@@ -23,6 +23,8 @@ app.add_middleware(
 
 app.include_router(generate.router, prefix="/api", tags=["generate"])
 app.include_router(templates.router, prefix="/api", tags=["templates"])
+app.include_router(export.router, prefix="/api", tags=["export"])
+app.include_router(refine.router, prefix="/api", tags=["refine"])
 
 
 @app.get("/")
