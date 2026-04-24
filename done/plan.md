@@ -177,13 +177,17 @@ feature/* (mỗi tính năng 1 branch)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Setup project structure | ⏳ Chưa bắt đầu | |
-| Frontend basic setup | ⏳ | |
-| Backend API setup | ⏳ | |
-| AI generator | ⏳ | |
-| Component renderer | ⏳ | |
-| Live preview | ⏳ | |
-| Export feature | ⏳ | |
+| Setup project structure | ✅ Done | Initial structure ready |
+| Frontend basic setup | ✅ Done | Vite + React + Tailwind v4 |
+| Backend API setup | ✅ Done | FastAPI + OpenAI integration |
+| AI generator | ✅ Done | GPT-4o integration |
+| Component renderer | ✅ Done | SectionRenderer implemented |
+| Live preview | ✅ Done | App.tsx preview mode |
+| Export feature | ✅ Done | Export HTML with Tailwind CDN |
+| Inline Editor | ✅ Done | ContentEditable sections |
+| Theme Customizer | ✅ Done | Color & Font support |
+| Template Gallery | ✅ Done | 3 basic templates |
+| AI Refinement | ✅ Done | Edit via text prompt |
 
 ---
 
@@ -218,31 +222,31 @@ python-multipart==0.0.6
 ## 11. Todo List
 
 ### Ngày 1-2: Setup
-- [ ] Tạo Next.js project với TypeScript
-- [ ] Setup Tailwind + shadcn/ui
-- [ ] Tạo FastAPI backend
-- [ ] Setup Git branches
+- [x] Tạo Next.js project với TypeScript
+- [x] Setup Tailwind + shadcn/ui
+- [x] Tạo FastAPI backend
+- [x] Setup Git branches
 
 ### Ngày 3-4: Core AI
-- [ ] Tạo AI service (OpenAI integration)
-- [ ] Viết prompt generation
-- [ ] Tạo JSON schema validator
+- [x] Tạo AI service (OpenAI integration)
+- [x] Viết prompt generation
+- [x] Tạo JSON schema validator
 
 ### Ngày 5-7: Components
-- [ ] Xây dựng Hero component
-- [ ] Xây dựng Features component
-- [ ] Xây dựng CTA component
-- [ ] Tạo live preview
+- [x] Xây dựng Hero component
+- [x] Xây dựng Features component
+- [x] Xây dựng CTA component
+- [x] Tạo live preview
 
 ### Ngày 8-10: Editor
-- [ ] Tạo input wizard
-- [ ] Tạo inline editor
-- [ ] Theme customizer
+- [x] Tạo input wizard (Cơ bản trong App.tsx)
+- [x] Tạo inline editor
+- [x] Theme customizer
 
 ### Ngày 11-14: Export
-- [ ] HTML/CSS generator
-- [ ] Download feature
-- [ ] Test & Fix bugs
+- [x] HTML/CSS generator
+- [x] Download feature
+- [x] Test & Fix bugs
 
 ---
 
