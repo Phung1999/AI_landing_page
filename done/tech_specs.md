@@ -63,6 +63,11 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 aiofiles==23.2.1
 httpx==0.26.0
+
+playwright==1.58.0
+requests==2.33.0
+beautifulsoup4==4.14.0
+lxml==6.1.0
 ```
 
 ---
@@ -165,12 +170,11 @@ class Template(Base):
 | POST | /api/generate | AI generate from description |
 | GET | /api/templates | List all templates |
 | GET | /api/templates/{id} | Get single template |
-| POST | /api/projects | Save project |
-| GET | /api/projects | List user projects |
-| GET | /api/projects/{id} | Get project |
-| PUT | /api/projects/{id} | Update project |
+| POST | /api/clone | Clone landing page từ URL |
+| POST | /api/projects | Save project to DB |
+| GET | /api/projects | List all projects |
+| GET | /api/projects/{id} | Get project detail |
 | DELETE | /api/projects/{id} | Delete project |
-| POST | /api/export | Export HTML/CSS |
 
 ### Frontend (Next.js API Routes)
 
@@ -393,4 +397,4 @@ DATABASE_URL=sqlite:///./db.sqlite
 
 ---
 
-**Last Updated:** 2026-04-24
+**Last Updated:** 2026-04-25

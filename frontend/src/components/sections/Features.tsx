@@ -4,6 +4,7 @@ interface FeatureItem {
   icon: string
   title: string
   description: string
+  iconImage?: string
 }
 
 interface FeaturesProps {
@@ -51,7 +52,11 @@ export function Features({ id, items, onUpdate }: FeaturesProps) {
                 className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-100 shadow-xl shadow-slate-200/50 hover:translate-y-[-8px] transition-all duration-300"
               >
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                  <IconComponent className="w-7 h-7 text-primary" />
+                  {item.iconImage ? (
+                    <img src={item.iconImage} alt={item.title} className="w-7 h-7 object-contain" />
+                  ) : (
+                    <IconComponent className="w-7 h-7 text-primary" />
+                  )}
                 </div>
                 <h3 
                   contentEditable 

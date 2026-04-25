@@ -188,6 +188,10 @@ feature/* (mỗi tính năng 1 branch)
 | Theme Customizer | ✅ Done | Color & Font support |
 | Template Gallery | ✅ Done | 3 basic templates |
 | AI Refinement | ✅ Done | Edit via text prompt |
+| Clone URL | ✅ Done | Playwright clone + parse |
+| Progress Bar | ✅ Done | Display progress % |
+| Gallery Section | ✅ Done | Image gallery |
+| Project Storage | ✅ Done | SQLite storage |
 
 ---
 
@@ -250,4 +254,4 @@ python-multipart==0.0.6
 
 ---
 
-**Last Updated:** 2026-04-24
+**Last Updated:** 2026-04-25

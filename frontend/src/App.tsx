@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { Sparkles, Loader2, Download, Settings, Layout, Eye, EyeOff, Wand2, Palette, Box } from "lucide-react"
+import { Sparkles, Loader2, Download, Settings, Layout, Eye, EyeOff, Wand2, Palette, Box, Copy, Globe, X } from "lucide-react"
 import { useGeneratorStore } from "@/stores/generatorStore"
-import { Button, Input, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui"
-import { Hero, Features, Testimonials, Pricing, CTA, Footer } from "@/components/sections"
-import { ThemeCustomizer } from "@/components/editor"
+import { Button, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui"
+import { Hero, Features, Testimonials, Pricing, CTA, Footer, Gallery } from "@/components/sections"
+import { ThemeCustomizer, DragDropEditor } from "@/components/editor"
 import { TemplateGallery } from "@/components/generator/TemplateGallery"
 
 const LANDING_TYPES = [
@@ -29,6 +29,8 @@ function SectionRenderer({ section }: { section: { id: string; type: string; pro
       return <CTA {...commonProps} {...(section.props as any)} />
     case "footer":
       return <Footer {...commonProps} {...(section.props as any)} />
+    case "gallery":
+      return <Gallery {...commonProps} {...(section.props as any)} />
     default:
       return null
   }
@@ -46,12 +48,20 @@ export default function App() {
     setSections, 
     setTheme,
     setIsGenerating, 
+    error,
     setError, 
     reset 
   } = useGeneratorStore()
   
   const [showPreview, setShowPreview] = useState(true)
-  const [activeTab, setActiveTab] = useState<"generate" | "templates" | "customize">("generate")
+  const [activeTab, setActiveTab] = useState<"generate" | "edit" | "templates" | "customize">("generate")
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null)
+  const [cloneUrl, setCloneUrl] = useState("")
+  const [isCloneMode, setIsCloneMode] = useState(false)
+  const [projectName, setProjectName] = useState("")
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [cloneProgress, setCloneProgress] = useState(0)
 
   const handleGenerate = async () => {
     if (!landingType || !description) {
@@ -84,8 +94,73 @@ export default function App() {
     }
   }
 
+  const handleClone = async () => {
+    if (!cloneUrl) {
+      setError("Vui lòng nhập URL landing page")
+      return
+    }
+
+    setCloneProgress(0)
+    setIsGenerating(true)
+    setError(null)
+    setShowPreview(true)
+
+    try {
+      const response = await fetch("http://localhost:8000/api/clone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: cloneUrl, name: projectName || undefined }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || "Lỗi khi clone landing page")
+      }
+
+      const data = await response.json()
+      setSections(data.sections)
+      if (data.theme) {
+        setTheme(data.theme)
+      }
+      setLandingType(data.landing_type)
+      setProjectName(data.name)
+      setShowSaveModal(true)
+      setCloneProgress(100)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi khi clone landing page")
+    } finally {
+      setIsGenerating(false)
+      setCloneProgress(0)
+    }
+  }
+
+  const handleSaveProject = async () => {
+    if (!projectName || sections.length === 0) return
+
+    try {
+      await fetch("http://localhost:8000/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: projectName,
+          landing_type: landingType,
+          sections: sections,
+          theme: theme,
+          url: cloneUrl || null
+        }),
+      })
+      setShowSaveModal(false)
+      setCloneUrl("")
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const handleExport = async () => {
     if (sections.length === 0) return
+
+    setIsExporting(true)
+    setExportMessage(null)
 
     try {
       const response = await fetch("http://localhost:8000/api/export", {
@@ -103,9 +178,15 @@ export default function App() {
       a.href = url
       a.download = "landing-page.html"
       a.click()
+      
+      setExportMessage({ text: "Xuất file thành công!", type: 'success' })
+      setTimeout(() => setExportMessage(null), 3000)
     } catch (err) {
       console.error(err)
-      alert("Không thể xuất file HTML")
+      setExportMessage({ text: "Không thể xuất file HTML", type: 'error' })
+      setTimeout(() => setExportMessage(null), 3000)
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -182,6 +263,17 @@ export default function App() {
                 <Wand2 className="w-4 h-4" />
                 Khởi tạo
               </button>
+              {sections.length > 0 && (
+                <button
+                  onClick={() => setActiveTab("edit")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[13px] font-semibold rounded-xl transition-all ${
+                    activeTab === "edit" ? "bg-white text-blue-600 shadow-sm border border-slate-100" : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  <Layout className="w-4 h-4" />
+                  Chỉnh sửa
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab("templates")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[13px] font-semibold rounded-xl transition-all ${
@@ -212,6 +304,77 @@ export default function App() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        onClick={() => setIsCloneMode(false)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all ${
+                          !isCloneMode ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        <Wand2 className="w-4 h-4" />
+                        AI Tạo
+                      </button>
+                      <button
+                        onClick={() => setIsCloneMode(true)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all ${
+                          isCloneMode ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        <Globe className="w-4 h-4" />
+                        Copy URL
+                      </button>
+                    </div>
+
+                    {isCloneMode ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[13px] font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                            Nhập URL Landing Page
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              placeholder="https://example.com/landing-page"
+                              value={cloneUrl}
+                              onChange={(e) => setCloneUrl(e.target.value)}
+                              className="flex-1 bg-slate-50 border border-slate-200 focus:bg-white transition-all text-sm px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={handleClone}
+                          disabled={isGenerating || !cloneUrl}
+                          className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-lg shadow-green-100"
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              {cloneProgress > 0 ? `Đang clone... ${cloneProgress}%` : "Đang copy..."}
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-5 h-5 mr-2" />
+                              Copy Landing Page
+                            </>
+                          )}
+                        </Button>
+                        {isGenerating && cloneProgress > 0 && (
+                          <div className="mt-3">
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-green-500 transition-all duration-300"
+                                style={{ width: `${cloneProgress}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1 text-center">
+                              Đang phân tích cấu trúc trang...
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                    <>
                     <div>
                       <label className="block text-[13px] font-bold text-slate-700 mb-3 uppercase tracking-wider">
                         Bạn đang muốn tạo gì?
@@ -268,6 +431,27 @@ export default function App() {
                         <Settings className="w-5 h-5 text-slate-400" />
                       </Button>
                     </div>
+                    </>
+                    )}
+                    {error && (
+                      <div className="text-sm text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
+                        {error}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === "edit" && (
+                <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-2xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-br from-white to-slate-50 border-b border-slate-100">
+                    <CardTitle className="text-xl">Chỉnh sửa Sections</CardTitle>
+                    <CardDescription>
+                      Kéo thả để sắp xếp, click để chỉnh sửa nội dung
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <DragDropEditor />
                   </CardContent>
                 </Card>
               )}
@@ -326,7 +510,7 @@ export default function App() {
                     </Button>
                   </form>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="bg-white/40 backdrop-blur-sm rounded-[3rem] border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-20 text-center min-h-[700px] animate-fade-in preview-container">
                 <div className="relative mb-8">
@@ -355,15 +539,44 @@ export default function App() {
         </div>
       </main>
 
-      {/* Footer mờ */}
-      <footer className="max-w-[1600px] mx-auto px-6 py-8 flex justify-between items-center text-[12px] text-slate-400 font-medium">
-        <div>© 2026 Antigravity AI Engine. All rights reserved.</div>
-        <div className="flex gap-6 uppercase tracking-widest">
-           <a href="#" className="hover:text-blue-600 transition-colors">Privacy</a>
-           <a href="#" className="hover:text-blue-600 transition-colors">Terms</a>
-           <a href="#" className="hover:text-blue-600 transition-colors">Docs</a>
+      {/* Save Project Modal */}
+      {showSaveModal && sections.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Lưu Landing Page</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Tên dự án
+                </label>
+                <input
+                  type="text"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  placeholder="Nhập tên dự án..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSaveProject}
+                  disabled={!projectName}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Lưu
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSaveModal(false)}
+                  className="flex-1"
+                >
+                  Hủy
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </footer>
+      )}
     </div>
   )
 }
