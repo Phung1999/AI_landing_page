@@ -117,7 +117,7 @@ export function Pricing({ id, plans, onUpdate }: PricingProps) {
                 className="w-full"
               >
                 <Button
-                  variant={plan.highlight ? "default" : "outline"}
+                  variant={plan.highlight ? "primary" : "outline"}
                   className={cn(
                     "w-full h-14 rounded-2xl text-lg font-bold transition-all pointer-events-none",
                     plan.highlight ? "bg-primary hover:opacity-90 border-none" : "border-slate-200 text-slate-900 hover:bg-slate-50"

@@ -5,7 +5,7 @@ import os
 import json
 import uuid
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from app.services.fallback_generator import generate_fallback_sections
 
 router = APIRouter()
 
@@ -90,43 +90,67 @@ Mô tả: {description}
 Chỉ trả về JSON, không có text khác."""
 
 
+def _is_valid_api_key(key: str | None) -> bool:
+    """Kiểm tra xem API key có hợp lệ hay không."""
+    if not key:
+        return False
+    if key in ("sk-your-key-here", "sk-...", ""):
+        return False
+    if not key.startswith("sk-"):
+        return False
+    return True
+
+
+def _generate_with_openai(request: GenerateRequest) -> list[dict]:
+    """Gọi OpenAI API để sinh landing page."""
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    prompt = SYSTEM_PROMPT.format(type=request.type, description=request.description)
+
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"Tạo landing page loại {request.type}: {request.description}"}
+        ],
+        temperature=0.7,
+        max_tokens=2000,
+        response_format={"type": "json_object"}
+    )
+
+    content = response.choices[0].message.content
+    if not content:
+        raise ValueError("Empty response from AI")
+
+    data = json.loads(content)
+    sections = []
+
+    for section in data.get("sections", []):
+        sections.append({
+            "id": str(uuid.uuid4()),
+            "type": section.get("type"),
+            "props": section.get("props", {})
+        })
+
+    return sections
+
+
 @router.post("/generate")
 async def generate_landing(request: GenerateRequest) -> dict:
     if not request.type or not request.description:
         raise HTTPException(status_code=400, detail="Type and description are required")
 
-    if not os.getenv("OPENAI_API_KEY"):
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
+    api_key = os.getenv("OPENAI_API_KEY")
 
-    try:
-        prompt = SYSTEM_PROMPT.format(type=request.type, description=request.description)
+    # Nếu có API key hợp lệ, thử gọi OpenAI trước
+    if _is_valid_api_key(api_key):
+        try:
+            sections = _generate_with_openai(request)
+            return {"sections": sections}
+        except Exception as e:
+            # Nếu OpenAI lỗi, fallback sang generator nội bộ
+            print(f"[WARNING] OpenAI API failed: {e}. Using fallback generator.")
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Tạo landing page loại {request.type}: {request.description}"}
-            ],
-            temperature=0.7,
-            max_tokens=2000,
-            response_format={"type": "json_object"}
-        )
-
-        content = response.choices[0].message.content
-        if not content:
-            raise HTTPException(status_code=500, detail="Empty response from AI")
-
-        data = json.loads(content)
-        sections = []
-
-        for section in data.get("sections", []):
-            sections.append({
-                "id": str(uuid.uuid4()),
-                "type": section.get("type"),
-                "props": section.get("props", {})
-            })
-
-        return {"sections": sections}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # Fallback: sinh landing page mẫu dựa trên loại và mô tả
+    print(f"[INFO] Using fallback generator for type={request.type}")
+    sections = generate_fallback_sections(request.type, request.description)
+    return {"sections": sections}

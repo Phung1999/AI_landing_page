@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-from app.routes import generate, templates, export, refine
+from app.routes import generate, templates, export, refine, clone
 
 app = FastAPI(
     title="AI Landing Page Generator API",
@@ -25,6 +25,7 @@ app.include_router(generate.router, prefix="/api", tags=["generate"])
 app.include_router(templates.router, prefix="/api", tags=["templates"])
 app.include_router(export.router, prefix="/api", tags=["export"])
 app.include_router(refine.router, prefix="/api", tags=["refine"])
+app.include_router(clone.router, prefix="/api", tags=["clone"])
 
 
 @app.get("/")

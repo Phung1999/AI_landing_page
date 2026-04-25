@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui"
+import { ImageUploader } from "@/components/editor"
 import { Sparkles } from "lucide-react"
 
 interface HeroProps {
@@ -11,10 +12,22 @@ interface HeroProps {
   onUpdate?: (id: string, props: any) => void
 }
 
-export function Hero({ id, title, subtitle, cta, ctaLink = "#", onUpdate }: HeroProps) {
+export function Hero({ id, title, subtitle, cta, image, onUpdate }: HeroProps) {
   const handleBlur = (field: string, e: React.FocusEvent<HTMLElement>) => {
     if (onUpdate && id) {
       onUpdate(id, { [field]: e.currentTarget.innerText })
+    }
+  }
+
+  const handleImageUpload = (imageUrl: string) => {
+    if (onUpdate && id) {
+      onUpdate(id, { image: imageUrl })
+    }
+  }
+
+  const handleImageRemove = () => {
+    if (onUpdate && id) {
+      onUpdate(id, { image: undefined })
     }
   }
 
@@ -26,44 +39,57 @@ export function Hero({ id, title, subtitle, cta, ctaLink = "#", onUpdate }: Hero
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400 rounded-full blur-[120px]" />
       </div>
 
-      <div className="max-w-5xl mx-auto text-center relative z-10">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-8 animate-fade-in">
-          <Sparkles className="w-3.5 h-3.5" />
-          Mới nhất từ AI Engine
-        </div>
-        
-        <h1 
-          contentEditable 
-          suppressContentEditableWarning
-          onBlur={(e) => handleBlur("title", e)}
-          className="text-5xl md:text-7xl font-black text-slate-900 mb-8 outline-none hover:bg-slate-50 rounded-2xl px-4 transition-all leading-[1.1] tracking-tight"
-        >
-          {title}
-        </h1>
-        
-        <p 
-          contentEditable 
-          suppressContentEditableWarning
-          onBlur={(e) => handleBlur("subtitle", e)}
-          className="text-xl text-slate-500 mb-12 max-w-3xl mx-auto outline-none hover:bg-slate-50 rounded-2xl px-4 transition-all leading-relaxed"
-        >
-          {subtitle}
-        </p>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <div 
-            contentEditable 
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Image Section */}
+        {onUpdate && id && (
+          <div className="mb-12">
+            <ImageUploader
+              onImageUpload={handleImageUpload}
+              currentImage={image}
+              onRemove={image ? handleImageRemove : undefined}
+            />
+          </div>
+        )}
+
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-8 animate-fade-in">
+            <Sparkles className="w-3.5 h-3.5" />
+            Mới nhất từ AI Engine
+          </div>
+          
+          <h1 
+            contentEditable={onUpdate ? true : false}
             suppressContentEditableWarning
-            onBlur={(e) => handleBlur("cta", e)}
-            className="inline-block"
+            onBlur={(e) => handleBlur("title", e)}
+            className="text-5xl md:text-7xl font-black text-slate-900 mb-8 outline-none hover:bg-slate-50 rounded-2xl px-4 transition-all leading-[1.1] tracking-tight"
           >
-            <Button size="lg" className="h-14 px-10 text-lg rounded-2xl bg-primary hover:opacity-90 shadow-2xl shadow-primary/20 pointer-events-none">
-              {cta}
+            {title}
+          </h1>
+          
+          <p 
+            contentEditable={onUpdate ? true : false}
+            suppressContentEditableWarning
+            onBlur={(e) => handleBlur("subtitle", e)}
+            className="text-xl text-slate-500 mb-12 max-w-3xl mx-auto outline-none hover:bg-slate-50 rounded-2xl px-4 transition-all leading-relaxed"
+          >
+            {subtitle}
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div 
+              contentEditable={onUpdate ? true : false}
+              suppressContentEditableWarning
+              onBlur={(e) => handleBlur("cta", e)}
+              className="inline-block"
+            >
+              <Button size="lg" className="h-14 px-10 text-lg rounded-2xl bg-primary hover:opacity-90 shadow-2xl shadow-primary/20 pointer-events-none">
+                {cta}
+              </Button>
+            </div>
+            <Button variant="ghost" size="lg" className="h-14 px-10 text-lg rounded-2xl text-slate-600 hover:bg-slate-50">
+              Xem thêm →
             </Button>
           </div>
-          <Button variant="ghost" size="lg" className="h-14 px-10 text-lg rounded-2xl text-slate-600 hover:bg-slate-50">
-            Xem thêm →
-          </Button>
         </div>
       </div>
     </section>
